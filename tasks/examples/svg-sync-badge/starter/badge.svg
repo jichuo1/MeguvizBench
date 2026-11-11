@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40">
+  <title id="badge-title">Sync</title>
+  <rect x="0" y="0" width="160" height="40" rx="0" fill="#777777"/>
+  <circle cx="8" cy="12" r="7" fill="#888888"/>
+  <text x="36" y="20" font-family="sans-serif" font-size="14" fill="#999999">SYNCED</text>
+</svg>

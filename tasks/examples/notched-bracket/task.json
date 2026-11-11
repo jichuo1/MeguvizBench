@@ -1,0 +1,138 @@
+{
+  "task_id": "notched-bracket",
+  "family_id": "notched-bracket",
+  "variant_id": "base",
+  "version": "1.0.0",
+  "scorer_version": "1.0.0",
+  "dimension": "frontend_graphics",
+  "subtype": "3d",
+  "tags": [
+    "obj",
+    "mesh",
+    "geometry"
+  ],
+  "difficulty": "D2",
+  "status": "synthetic",
+  "source": {
+    "project": "MeguvizBench synthetic calibration",
+    "revision": "1.0.0",
+    "exposure": "public_example_with_reference"
+  },
+  "capabilities": [],
+  "submission": {
+    "files": [
+      "bracket.obj"
+    ],
+    "entrypoint": null
+  },
+  "rubric": [
+    {
+      "id": "obj_document",
+      "points": 5,
+      "category": "structure",
+      "evidence": "文本 OBJ 包含有效顶点与面记录，且无外部文件依赖",
+      "method": "解析顶点和面，验证允许的记录类型与坐标格式",
+      "failure": "文件无法作为受约束的 OBJ 网格读取"
+    },
+    {
+      "id": "triangulated_faces",
+      "points": 7,
+      "category": "structure",
+      "evidence": "所有面是有效、非退化且不重复的三角形",
+      "method": "核对顶点索引、三角形叉积和无序面去重",
+      "failure": "网格含非三角形、越界、退化或重复面"
+    },
+    {
+      "id": "vertex_set",
+      "points": 9,
+      "category": "constraint",
+      "evidence": "网格使用且只使用规定的十二个角点",
+      "method": "对顶点集合及个数进行精确有理数比较",
+      "failure": "角点遗漏、重复或存在非角点"
+    },
+    {
+      "id": "scale",
+      "points": 8,
+      "category": "constraint",
+      "evidence": "三轴包围盒分别为 [0,3]、[0,2]、[0,1]",
+      "method": "比较各轴坐标的极值",
+      "failure": "模型发生缩放、平移或超出指定轴范围"
+    },
+    {
+      "id": "notch",
+      "points": 12,
+      "category": "constraint",
+      "evidence": "网格保持缺角区域为空",
+      "method": "将每个三角形投影并与缺角半平面相交，核对交集面积为零",
+      "failure": "有三角面填进缺角"
+    },
+    {
+      "id": "boundary_surfaces",
+      "points": 13,
+      "category": "constraint",
+      "evidence": "每个三角形都在八个设计边界面之一",
+      "method": "检查每个三角形的角点是否只属于一个指定边界面",
+      "failure": "存在内部面、跨面三角形或非指定面"
+    },
+    {
+      "id": "surface_coverage",
+      "points": 13,
+      "category": "render",
+      "evidence": "八个设计面各自覆盖正确的面积",
+      "method": "按平面累积三角面积并与八个参考面积分别精确比较",
+      "failure": "一个或多个面有遗漏或面积异常"
+    },
+    {
+      "id": "closed_edges",
+      "points": 12,
+      "category": "structure",
+      "evidence": "每条无向边恰有两个相邻面",
+      "method": "统计网格的逐边面关联数",
+      "failure": "出现开口接缝或非流形边"
+    },
+    {
+      "id": "outward_winding",
+      "points": 11,
+      "category": "render",
+      "evidence": "每个三角形的法向朝向实体外侧",
+      "method": "检查面叉积与该设计面的外法向点积为正",
+      "failure": "绕序翻转、退化或法向无效"
+    },
+    {
+      "id": "volume",
+      "points": 10,
+      "category": "correctness",
+      "evidence": "有向体积等于 4 个立方单位",
+      "method": "对所有三角形计算有向四面体体积并精确求和",
+      "failure": "有向体积与设计值不符"
+    }
+  ],
+  "caps": [
+    {
+      "requires": [
+        "obj_document",
+        "triangulated_faces"
+      ],
+      "max_score": 25
+    },
+    {
+      "requires": [
+        "vertex_set",
+        "scale",
+        "notch",
+        "boundary_surfaces"
+      ],
+      "max_score": 45
+    },
+    {
+      "requires": [
+        "surface_coverage",
+        "closed_edges",
+        "outward_winding",
+        "volume"
+      ],
+      "max_score": 55
+    }
+  ],
+  "wrong_max_score": 55
+}

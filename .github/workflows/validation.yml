@@ -1,0 +1,71 @@
+name: 公开校验
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      harbor_smoke:
+        description: 额外运行 Harbor 公开集成验证
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: 校验协议与公开题包
+        run: python -m meguvizbench validate
+      - name: 运行离线协议测试
+        run: python -m unittest discover -s tests -v
+      - name: Docker 校准与隔离探针
+        run: python -m meguvizbench self-check --backend docker --output .bench/public-check
+
+  harbor-smoke:
+    if: github.event_name == 'workflow_dispatch' && inputs.harbor_smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: 安装 Harbor 候选版本
+        run: |
+          python -m venv "$RUNNER_TEMP/harbor-venv"
+          "$RUNNER_TEMP/harbor-venv/bin/python" -m pip --isolated install 'harbor==0.25.0'
+          printf '%s\n' "$RUNNER_TEMP/harbor-venv/bin" >> "$GITHUB_PATH"
+      - name: 运行公开 SVG 的 Harbor 独立验收
+        run: python -m meguvizbench harbor-smoke --output "$RUNNER_TEMP/harbor-public"
+      - name: 保留公开集成验证日志
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: harbor-public-smoke
+          path: |
+            ${{ runner.temp }}/harbor-public/version.txt
+            ${{ runner.temp }}/harbor-public/run.log
+            ${{ runner.temp }}/harbor-public/verified.json
+          if-no-files-found: ignore
+          overwrite: true
+          retention-days: 3

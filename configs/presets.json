@@ -1,0 +1,20 @@
+{
+  "image": "docker.io/library/python@sha256:f576b530293e74140ea91d262232648d5c4f45640a95ec447757701bfcacf034",
+  "models": {
+    "controls": [
+      {"id":"oracle","model_id":"oracle","agent_id":"fixture-v1"},
+      {"id":"wrong","model_id":"wrong","agent_id":"fixture-v1"}
+    ],
+    "pilot-two": [
+      {"id":"luna-v1","model_id":"gpt-5.6-luna","agent_id":"single-turn-files-v1","input_rate":0.20,"cached_rate":0.02,"output_rate":1.20,"price_source":"https://developers.openai.com/api/docs/models/gpt-5.6-luna","price_checked":"2026-11-11"},
+      {"id":"terra-v1","model_id":"gpt-5.6-terra","agent_id":"single-turn-files-v1","input_rate":2.00,"cached_rate":0.20,"output_rate":12.00,"price_source":"https://developers.openai.com/api/docs/models/gpt-5.6-terra","price_checked":"2026-11-11"}
+    ],
+    "luna-only": ["luna-v1"],
+    "terra-only": ["terra-v1"]
+  },
+  "budgets": {
+    "zero": {"total_microusd":0,"trial_microusd":0,"calls":0,"output_tokens":0,"wall_seconds":240,"retries":0},
+    "pilot": {"total_microusd":6000000,"trial_microusd":250000,"calls":2,"output_tokens":4096,"wall_seconds":240,"retries":1},
+    "official": {"total_microusd":100000000,"trial_microusd":250000,"calls":2,"output_tokens":4096,"wall_seconds":240,"retries":1}
+  }
+}

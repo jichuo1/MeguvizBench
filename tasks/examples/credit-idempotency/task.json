@@ -1,0 +1,135 @@
+{
+  "task_id": "credit-idempotency",
+  "family_id": "credit-idempotency",
+  "variant_id": "base",
+  "version": "1.0.0",
+  "scorer_version": "1.0.0",
+  "dimension": "backend_consistency",
+  "subtype": "idempotency",
+  "tags": [
+    "idempotency",
+    "ledger",
+    "state"
+  ],
+  "difficulty": "D2",
+  "status": "synthetic",
+  "source": {
+    "project": "MeguvizBench synthetic calibration",
+    "revision": "1.0.0",
+    "exposure": "public_example_with_reference"
+  },
+  "capabilities": [
+    "shell"
+  ],
+  "submission": {
+    "files": [
+      "solution.py"
+    ],
+    "entrypoint": "solution.py"
+  },
+  "rubric": [
+    {
+      "id": "first_spend",
+      "points": 9,
+      "category": "correctness",
+      "evidence": "新键扣减准确金额并返回扣减后的余额",
+      "method": "执行一次余额充足的扣减，比对回执和最终余额",
+      "failure": "基本扣减或回执错误"
+    },
+    {
+      "id": "exact_balance",
+      "points": 7,
+      "category": "regression",
+      "evidence": "扣减金额等于余额时成功归零",
+      "method": "提交刚好耗尽余额的请求并比对整数 0",
+      "failure": "余额等值分支被拒绝或余额错误"
+    },
+    {
+      "id": "duplicate_no_charge",
+      "points": 17,
+      "category": "correctness",
+      "evidence": "相同账户、键与金额的重试不二次扣款",
+      "method": "连续提交两个相同请求，核对两份回执和余额",
+      "failure": "重复扣款或回执不一致"
+    },
+    {
+      "id": "original_receipt",
+      "points": 13,
+      "category": "correctness",
+      "evidence": "后续余额变化不影响原回执",
+      "method": "在同键的两次请求间插入另一次成功扣款",
+      "failure": "重试返回当前余额而非原始回执"
+    },
+    {
+      "id": "changed_amount_conflict",
+      "points": 13,
+      "category": "correctness",
+      "evidence": "同键换金额产生冲突且余额不变",
+      "method": "复用已成功的键，但更换金额",
+      "failure": "同键异参被接受或仍产生状态变更"
+    },
+    {
+      "id": "account_key_scope",
+      "points": 14,
+      "category": "correctness",
+      "evidence": "幂等键按账户隔离",
+      "method": "两个账户使用相同键并比对各自扣减和回执",
+      "failure": "一个账户的记录影响另一账户"
+    },
+    {
+      "id": "failed_key_reusable",
+      "points": 10,
+      "category": "correctness",
+      "evidence": "余额不足不占用键，后续合法扣款可以成功",
+      "method": "同一新键先请求超额金额，再提交可支付金额",
+      "failure": "失败请求改变余额或锁死了幂等键"
+    },
+    {
+      "id": "amount_validation",
+      "points": 9,
+      "category": "regression",
+      "evidence": "布尔值、零、负数、小数和字符串金额均拒绝且状态不变",
+      "method": "在同一账户批量提交无效金额，核对错误和最终余额",
+      "failure": "输入被宽松转换为可扣金额或错误状态不符"
+    },
+    {
+      "id": "unknown_account",
+      "points": 5,
+      "category": "regression",
+      "evidence": "不存在的账户被明确拒绝且其他余额不变",
+      "method": "向缺失账户提交正整数金额",
+      "failure": "未知账户错误被误分类或账本被改动"
+    },
+    {
+      "id": "no_requests",
+      "points": 3,
+      "category": "regression",
+      "evidence": "空请求序列完整保留初始余额",
+      "method": "执行无请求批次并比对空回执数组",
+      "failure": "空请求改变账本或返回无效形状"
+    }
+  ],
+  "caps": [
+    {
+      "requires": [
+        "first_spend"
+      ],
+      "max_score": 25
+    },
+    {
+      "requires": [
+        "duplicate_no_charge",
+        "changed_amount_conflict"
+      ],
+      "max_score": 49
+    },
+    {
+      "requires": [
+        "original_receipt",
+        "account_key_scope"
+      ],
+      "max_score": 70
+    }
+  ],
+  "wrong_max_score": 70
+}

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>MeguvizBench · 评测结果</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div class="frame top-inner">
+      <a href="./" class="brand">MeguvizBench</a>
+      <nav aria-label="主导航">
+        <a href="#results">评测结果</a>
+        <a href="#methods">评分方法</a>
+        <button id="theme" type="button">切换主题</button>
+      </nav>
+    </div>
+  </header>
+  <main class="frame">
+    <header class="intro">
+      <h1>评测结果</h1>
+      <p>查看模型与 Agent 在固定题集、工具条件和预算下的成绩。</p>
+    </header>
+    <p id="notice" class="notice" role="status">正在读取公开成绩。</p>
+    <section id="results" aria-label="评测结果" hidden>
+      <div class="filters">
+        <label>运行类型<select id="mode"></select></label>
+        <label>题集<select id="taskset"></select></label>
+        <label>题集版本<select id="version"></select></label>
+        <label>预算档位<select id="budget"></select></label>
+        <label>任务类型<select id="task-type"></select></label>
+      </div>
+      <section class="panel comparison" aria-labelledby="compare-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="compare-heading">配置对照</h2>
+            <p id="compare-context" class="subtle"></p>
+          </div>
+          <label class="cohort-label">可比组<select id="cohort"></select></label>
+        </div>
+        <div class="table-scroll" tabindex="0" aria-label="配置对照数据表">
+          <table role="table">
+            <thead role="rowgroup"><tr role="row"><th scope="col">模型 / Agent</th><th scope="col">运行</th><th scope="col">综合分</th>
+              <th scope="col" id="type-column" hidden>任务类型得分</th>
+              <th scope="col">计分试次</th><th scope="col">成功率</th><th scope="col">累计用时</th><th scope="col">累计费用</th></tr></thead>
+            <tbody id="comparison-rows" role="rowgroup"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="panel details" aria-labelledby="details-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="details-heading">八维成绩</h2>
+            <p class="subtle" id="detail-context"></p>
+          </div>
+          <label class="run-label">查看试次汇总<select id="selected-run"></select></label>
+        </div>
+        <div class="dimensions">
+          <figure>
+            <canvas id="radar" role="img" aria-label="八维成绩雷达图，数值见同区数据表"></canvas>
+            <figcaption>固定量纲 0–100。实点代表已测维度，空缺轴代表 N/A。</figcaption>
+          </figure>
+          <div class="table-scroll" tabindex="0" aria-label="八维得分数据表">
+            <table>
+              <thead><tr><th scope="col">维度</th><th scope="col">得分</th><th scope="col">覆盖率</th><th scope="col">试次</th><th scope="col">题族</th><th scope="col">95% 区间</th></tr></thead>
+              <tbody id="dimension-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <section class="statuses" aria-labelledby="status-heading">
+          <h3 id="status-heading">试次状态</h3>
+          <ul id="statuses"></ul>
+        </section>
+      </section>
+      <section id="history" class="panel history" aria-labelledby="history-heading" hidden>
+        <div class="panel-head">
+          <div><h2 id="history-heading">历史记录</h2><p class="subtle">同一模型与 Agent 的历次公开运行，按题集版本和可比组列出。</p></div>
+        </div>
+        <div class="table-scroll" tabindex="0" aria-label="历史记录数据表">
+          <table>
+            <thead><tr><th scope="col">运行</th><th scope="col">题集版本</th><th scope="col">配置版本</th>
+              <th scope="col">预算</th><th scope="col">可比组</th><th scope="col">综合分</th></tr></thead>
+            <tbody id="history-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+    <section id="methods" class="panel methods" aria-labelledby="method-heading">
+      <h2 id="method-heading">评分方法</h2>
+      <div class="method-grid">
+        <section><h3>分项计分</h3><p>评分器按预先定义的检查项给分，应用正确性门槛和封顶规则。重复试次先在变体内平均，各变体在题族内等权，各题族在主维度内等权。</p></section>
+        <section><h3>覆盖率与不确定性</h3><p>覆盖率等于可计分试次除以计划试次。维度的计划试次全部可计分且题族数达到 3 时，以题族为单位重采样 2,000 次，报告 95% 百分位区间。</p></section>
+        <section><h3>可比性与综合分</h3><p>可比组冻结协议、任务、种子、评分器、环境、工具和预算。八维均完整且每维至少有 3 个题族时，按冻结权重计算综合分。正式运行在各自可比组内按综合分排列。</p></section>
+        <section><h3>证据索引</h3><p>公开页只展示脱敏汇总。维护者可用运行 ID 在私有归档定位试次、验收记录和产物摘要。公开校准样例随框架发布。</p></section>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

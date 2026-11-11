@@ -1,0 +1,142 @@
+{
+  "task_id": "svg-sync-badge",
+  "family_id": "svg-sync-badge",
+  "variant_id": "base",
+  "version": "1.0.0",
+  "scorer_version": "1.0.0",
+  "dimension": "frontend_graphics",
+  "subtype": "svg",
+  "tags": [
+    "svg",
+    "accessibility",
+    "layout"
+  ],
+  "difficulty": "D2",
+  "status": "synthetic",
+  "source": {
+    "project": "MeguvizBench synthetic calibration",
+    "revision": "1.0.0",
+    "exposure": "public_example_with_reference"
+  },
+  "capabilities": [],
+  "submission": {
+    "files": [
+      "badge.svg"
+    ],
+    "entrypoint": null
+  },
+  "rubric": [
+    {
+      "id": "svg_document",
+      "points": 6,
+      "category": "structure",
+      "evidence": "有效 UTF-8 XML 且根节点属于 SVG 命名空间",
+      "method": "解析产物并检查根元素；禁止文档类型、实体声明和外部处理指令",
+      "failure": "产物不能作为受约束的 SVG 文档读取"
+    },
+    {
+      "id": "restricted_primitives",
+      "points": 10,
+      "category": "structure",
+      "evidence": "根及四个子元素只使用允许的原语和属性",
+      "method": "逐节点核对标签、数量、嵌套和属性白名单",
+      "failure": "缺少原语或包含脚本、外链、变换等未允许结构"
+    },
+    {
+      "id": "canvas",
+      "points": 6,
+      "category": "constraint",
+      "evidence": "画布坐标系固定为 0 0 160 40",
+      "method": "读取根元素 viewBox 并比对四个坐标",
+      "failure": "坐标系与基准画布不同"
+    },
+    {
+      "id": "accessible_name",
+      "points": 8,
+      "category": "structure",
+      "evidence": "图片角色绑定正确的标题文本",
+      "method": "核对 role、aria-labelledby 与 title 的引用关系",
+      "failure": "可访问名称缺失或绑定错误"
+    },
+    {
+      "id": "background_geometry",
+      "points": 10,
+      "category": "constraint",
+      "evidence": "背景填满画布且具有规定圆角",
+      "method": "比较矩形范围、坐标与圆角数值",
+      "failure": "背景留空、越界或圆角不符"
+    },
+    {
+      "id": "indicator_geometry",
+      "points": 9,
+      "category": "constraint",
+      "evidence": "圆形状态点满足半径和圆心约束",
+      "method": "核对圆形坐标与半径范围",
+      "failure": "状态点位置或大小偏离规定"
+    },
+    {
+      "id": "label_geometry",
+      "points": 11,
+      "category": "constraint",
+      "evidence": "标签文本、字族、字号、起点与基线均符合规格",
+      "method": "读取文本和排版属性并核对区间",
+      "failure": "标签内容错误或排版属性超出规定"
+    },
+    {
+      "id": "foreground_visibility",
+      "points": 12,
+      "category": "render",
+      "evidence": "图标和文字位于可见区域且绘制在背景上方",
+      "method": "根据原语几何范围估算文字保守包围盒，并检查遮挡顺序和间距",
+      "failure": "图标或文字越界、重叠、间距不足或被背景遮挡"
+    },
+    {
+      "id": "fill_colors",
+      "points": 5,
+      "category": "constraint",
+      "evidence": "三个图形元素的颜色均是明确的六位十六进制值",
+      "method": "对每个 fill 应用固定颜色格式检查",
+      "failure": "颜色格式缺失、无效或依赖外部样式"
+    },
+    {
+      "id": "text_contrast",
+      "points": 13,
+      "category": "visual",
+      "evidence": "文字与背景的计算亮度对比达到 4.5",
+      "method": "将指定 sRGB 颜色线性化后按相对亮度计算对比值",
+      "failure": "文字对比值低于要求或无法计算"
+    },
+    {
+      "id": "indicator_contrast",
+      "points": 10,
+      "category": "visual",
+      "evidence": "图标与背景的计算亮度对比达到 3",
+      "method": "将指定 sRGB 颜色线性化后按相对亮度计算对比值",
+      "failure": "图标对比值低于要求或无法计算"
+    }
+  ],
+  "caps": [
+    {
+      "requires": [
+        "svg_document",
+        "restricted_primitives",
+        "canvas"
+      ],
+      "max_score": 25
+    },
+    {
+      "requires": [
+        "foreground_visibility"
+      ],
+      "max_score": 55
+    },
+    {
+      "requires": [
+        "text_contrast",
+        "indicator_contrast"
+      ],
+      "max_score": 80
+    }
+  ],
+  "wrong_max_score": 55
+}

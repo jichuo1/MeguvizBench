@@ -1,0 +1,9 @@
+[project]
+name = "meguvizbench"
+version = "0.1.0"
+description = "Evidence-based evaluation of software and verification tasks"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false

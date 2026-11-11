@@ -1,0 +1,259 @@
+name: 基准评测
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 运行模式
+        type: choice
+        default: platform_validation
+        options: [platform_validation, pilot, official]
+      taskset:
+        description: 题集配置
+        type: choice
+        default: public-six
+        options: [public-six, private]
+      models:
+        description: 模型配置组
+        type: choice
+        default: controls
+        options: [controls, pilot-two, luna-only, terra-only]
+      budget:
+        description: 预算档位
+        type: choice
+        default: zero
+        options: [zero, pilot, official]
+      repeats:
+        description: 独立重复次数
+        type: choice
+        default: '2'
+        options: ['1', '2', '3']
+      run_key:
+        description: 本轮唯一键（重派请保留原键）
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: meguvizbench-benchmark
+  cancel-in-progress: false
+  queue: max
+
+env:
+  PYTHONPATH: src
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  plan:
+    if: github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch && (inputs.mode == 'platform_validation' || (github.ref_protected && github.run_attempt == '1'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: ${{ inputs.mode == 'platform_validation' && 'benchmark-public' || 'benchmark-protected' }}
+    outputs:
+      matrix: ${{ steps.freeze.outputs.matrix }}
+      plan_sha: ${{ steps.freeze.outputs.plan_sha }}
+    steps:
+      - name: 校验模式与题集
+        env:
+          MODE: ${{ inputs.mode }}
+          TASKSET: ${{ inputs.taskset }}
+        run: |
+          case "$MODE:$TASKSET" in
+            platform_validation:public-six|pilot:public-six|official:private) ;;
+            *)
+              echo '::error::公开对照与试跑使用 public-six，正式评测使用 private。'
+              exit 1
+              ;;
+          esac
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/prepare-benchmark
+        with:
+          mode: ${{ inputs.mode }}
+          taskset: ${{ inputs.taskset }}
+          models: ${{ inputs.models }}
+          budget: ${{ inputs.budget }}
+          repeats: ${{ inputs.repeats }}
+          run-key: ${{ inputs.run_key }}
+          materials-repo: ${{ inputs.mode == 'official' && secrets.BENCH_TASKS_REPO || '' }}
+          materials-ref: ${{ inputs.mode == 'official' && secrets.BENCH_TASKS_REF || '' }}
+          materials-token: ${{ inputs.mode == 'official' && secrets.BENCH_TASKS_TOKEN || '' }}
+      - name: 检查批次并冻结矩阵
+        id: freeze
+        run: |
+          if ! batch_count=$(python -m meguvizbench matrix --plan .bench/plan.json --batch-count 2>.bench/matrix.log) \
+            || [[ "$batch_count" != 1 ]]; then
+            echo '::error::本工作流仅接受一个矩阵批次。请按模型选择预设，重新生成完整的独立计划。'
+            exit 1
+          fi
+          if ! python -m meguvizbench matrix --plan .bench/plan.json --batch 0 >.bench/matrix.json 2>>.bench/matrix.log \
+            || ! jq -e 'keys == ["include"] and (.include | length >= 1 and length <= 128 and all(.[]; keys == ["trial_id"] and (.trial_id | test("^[A-Za-z0-9_-]{1,128}$"))))' .bench/matrix.json >/dev/null 2>>.bench/matrix.log; then
+            echo '::error::矩阵格式校验失败。'
+            exit 1
+          fi
+          matrix=$(jq -c . .bench/matrix.json)
+          plan_sha=$(sha256sum .bench/plan.json | cut -d ' ' -f 1)
+          printf 'matrix=%s\nplan_sha=%s\n' "$matrix" "$plan_sha" >> "$GITHUB_OUTPUT"
+      - name: 领取付费批次
+        if: inputs.mode != 'platform_validation'
+        env:
+          MODE: ${{ inputs.mode }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BENCH_EVIDENCE_REPO: ${{ secrets.BENCH_EVIDENCE_REPO }}
+          BENCH_EVIDENCE_TOKEN: ${{ secrets.BENCH_EVIDENCE_TOKEN }}
+        run: |
+          if ! docker info >/dev/null 2>.bench/docker.log; then
+            echo '::error::Docker 未就绪，未领取付费批次。'
+            exit 1
+          fi
+          private_args=()
+          if [[ "$MODE" == official ]]; then
+            private_args+=(--private-tasks .bench/materials/tasks)
+          fi
+          if ! python -m meguvizbench claim --plan .bench/plan.json "${private_args[@]}" >.bench/claim.log 2>&1; then
+            echo '::error::凭据、私有归档、公开输出预检或批次占用检查失败。'
+            exit 1
+          fi
+
+  trial:
+    needs: plan
+    if: inputs.mode == 'platform_validation' || (github.ref_protected && github.run_attempt == '1')
+    name: 试次 ${{ matrix.trial_id }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment: ${{ inputs.mode == 'platform_validation' && 'benchmark-public' || 'benchmark-protected' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/prepare-benchmark
+        with:
+          mode: ${{ inputs.mode }}
+          taskset: ${{ inputs.taskset }}
+          models: ${{ inputs.models }}
+          budget: ${{ inputs.budget }}
+          repeats: ${{ inputs.repeats }}
+          run-key: ${{ inputs.run_key }}
+          materials-repo: ${{ inputs.mode == 'official' && secrets.BENCH_TASKS_REPO || '' }}
+          materials-ref: ${{ inputs.mode == 'official' && secrets.BENCH_TASKS_REF || '' }}
+          materials-token: ${{ inputs.mode == 'official' && secrets.BENCH_TASKS_TOKEN || '' }}
+      - name: 执行并保存证据
+        env:
+          MODE: ${{ inputs.mode }}
+          TRIAL_ID: ${{ matrix.trial_id }}
+          PLAN_SHA: ${{ needs.plan.outputs.plan_sha }}
+          OPENAI_API_KEY: ${{ inputs.mode != 'platform_validation' && secrets.OPENAI_API_KEY || '' }}
+          BENCH_EVIDENCE_REPO: ${{ inputs.mode != 'platform_validation' && secrets.BENCH_EVIDENCE_REPO || '' }}
+          BENCH_EVIDENCE_TOKEN: ${{ inputs.mode != 'platform_validation' && secrets.BENCH_EVIDENCE_TOKEN || '' }}
+        run: |
+          if ! printf '%s  %s\n' "$PLAN_SHA" .bench/plan.json | sha256sum --check --status; then
+            echo '::error::重建的清单与领取时不同。'
+            exit 1
+          fi
+          output="$RUNNER_TEMP/platform-results"
+          archive_args=()
+          if [[ "$MODE" != platform_validation ]]; then
+            output=.bench/private-results
+            archive_args+=(--archive)
+          fi
+          if [[ "$MODE" == official ]]; then
+            archive_args+=(--private-tasks .bench/materials/tasks)
+          fi
+          if ! python -m meguvizbench trial --plan .bench/plan.json --trial-id "$TRIAL_ID" \
+            --output "$output" --backend docker "${archive_args[@]}" >.bench/trial.log 2>&1; then
+            echo '::error::试次执行或证据保存失败。'
+            exit 1
+          fi
+      - name: 暂存公开对照证据
+        if: inputs.mode == 'platform_validation'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: platform-trial-${{ matrix.trial_id }}
+          path: ${{ runner.temp }}/platform-results
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 3
+
+  collect:
+    needs: [plan, trial]
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: ${{ inputs.mode == 'platform_validation' && 'benchmark-public' || 'benchmark-protected' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/prepare-benchmark
+        with:
+          mode: ${{ inputs.mode }}
+          taskset: ${{ inputs.taskset }}
+          models: ${{ inputs.models }}
+          budget: ${{ inputs.budget }}
+          repeats: ${{ inputs.repeats }}
+          run-key: ${{ inputs.run_key }}
+          materials-repo: ${{ inputs.mode == 'official' && secrets.BENCH_TASKS_REPO || '' }}
+          materials-ref: ${{ inputs.mode == 'official' && secrets.BENCH_TASKS_REF || '' }}
+          materials-token: ${{ inputs.mode == 'official' && secrets.BENCH_TASKS_TOKEN || '' }}
+      - name: 读取公开对照证据
+        if: inputs.mode == 'platform_validation'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: platform-trial-*
+          path: ${{ runner.temp }}/platform-collection
+          merge-multiple: true
+      - name: 恢复归档并生成允许公开的结果
+        env:
+          MODE: ${{ inputs.mode }}
+          PLAN_SHA: ${{ needs.plan.outputs.plan_sha }}
+          BENCH_EVIDENCE_REPO: ${{ inputs.mode != 'platform_validation' && secrets.BENCH_EVIDENCE_REPO || '' }}
+          BENCH_EVIDENCE_TOKEN: ${{ inputs.mode != 'platform_validation' && secrets.BENCH_EVIDENCE_TOKEN || '' }}
+        run: |
+          if ! printf '%s  %s\n' "$PLAN_SHA" .bench/plan.json | sha256sum --check --status; then
+            echo '::error::重建的清单与领取时不同。'
+            exit 1
+          fi
+          evidence="$RUNNER_TEMP/platform-collection"
+          private_args=()
+          if [[ "$MODE" == official ]]; then
+            private_args+=(--private-tasks .bench/materials/tasks)
+          fi
+          if [[ "$MODE" != platform_validation ]]; then
+            evidence=.bench/restored
+            if ! python -m meguvizbench restore --plan .bench/plan.json --output "$evidence" "${private_args[@]}" >.bench/restore.log 2>&1; then
+              echo '::error::无法恢复或验证私有归档。'
+              exit 1
+            fi
+          fi
+          mkdir -p "$evidence"
+          previous_args=()
+          if [[ -f results/public/history.json ]]; then
+            previous_args+=(--previous results/public/history.json)
+          fi
+          if ! python -m meguvizbench publish --plan .bench/plan.json --results "$evidence" \
+              --output "$RUNNER_TEMP/result-site" "${private_args[@]}" "${previous_args[@]}" >.bench/publish.log 2>&1 \
+            || ! python -m meguvizbench public-validate --input "$RUNNER_TEMP/result-site/data.json" >>.bench/publish.log 2>&1; then
+            echo '::error::脱敏结果未通过导出检查。'
+            exit 1
+          fi
+      - name: 上传经校验的公开 JSON
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: meguvizbench-public-results
+          path: ${{ runner.temp }}/result-site/data.json
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7

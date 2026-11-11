@@ -1,0 +1,134 @@
+{
+  "task_id": "interval-coverage",
+  "family_id": "interval-coverage",
+  "variant_id": "base",
+  "version": "1.0.0",
+  "scorer_version": "1.0.0",
+  "dimension": "maintenance_architecture",
+  "subtype": "local_bug",
+  "tags": [
+    "bugfix",
+    "intervals",
+    "boundary"
+  ],
+  "difficulty": "D1",
+  "status": "synthetic",
+  "source": {
+    "project": "MeguvizBench synthetic calibration",
+    "revision": "1.0.0",
+    "exposure": "public_example_with_reference"
+  },
+  "capabilities": [
+    "shell"
+  ],
+  "submission": {
+    "files": [
+      "solution.py"
+    ],
+    "entrypoint": "solution.py"
+  },
+  "rubric": [
+    {
+      "id": "single_span",
+      "points": 12,
+      "category": "correctness",
+      "evidence": "普通单区间输出精确整数长度",
+      "method": "提交程序执行一个与窗口不相交边界的有效区间请求，严格比对 JSON 整数",
+      "failure": "未得到可运行的区间长度计算"
+    },
+    {
+      "id": "window_clipping",
+      "points": 14,
+      "category": "correctness",
+      "evidence": "窗口左右两侧的区间各自只保留窗口内部分",
+      "method": "同时提交左越界和右越界区间，比对裁剪后总长度",
+      "failure": "窗口外覆盖被计入或窗口内覆盖被丢弃"
+    },
+    {
+      "id": "overlap_union",
+      "points": 17,
+      "category": "correctness",
+      "evidence": "部分重叠的覆盖只计一次",
+      "method": "两区间共享正长度交集，核对并集长度",
+      "failure": "重叠覆盖被重复计数或漏计"
+    },
+    {
+      "id": "nested_union",
+      "points": 15,
+      "category": "regression",
+      "evidence": "完全嵌套区间不会使合并边界回退",
+      "method": "连续处理一个外区间和两个内区间，核对只保留外区间长度",
+      "failure": "嵌套区间使覆盖边界回退"
+    },
+    {
+      "id": "unordered_disjoint",
+      "points": 7,
+      "category": "regression",
+      "evidence": "多个无序不相交区间的各自覆盖被保留",
+      "method": "打乱三段不相交区间的输入顺序后核对总长度",
+      "failure": "无序输入导致某段覆盖被丢弃"
+    },
+    {
+      "id": "half_open_edges",
+      "points": 8,
+      "category": "correctness",
+      "evidence": "区间接边与窗口外仅接触边界按左闭右开语义处理",
+      "method": "同时提交互相接边的区间与仅在窗口边界相接的区间",
+      "failure": "边界被错误算作额外覆盖或产生空隙"
+    },
+    {
+      "id": "empty_input",
+      "points": 4,
+      "category": "regression",
+      "evidence": "非空窗口内无输入区间时输出 0",
+      "method": "执行空列表并检查结果类型和值",
+      "failure": "空区间列表处理错误"
+    },
+    {
+      "id": "empty_window",
+      "points": 5,
+      "category": "regression",
+      "evidence": "零长窗口的覆盖为 0",
+      "method": "提交空窗口和包含该点的区间",
+      "failure": "空窗口仍被计入覆盖"
+    },
+    {
+      "id": "signed_endpoints",
+      "points": 7,
+      "category": "regression",
+      "evidence": "负数端点保持原有顺序及长度",
+      "method": "在跨越原点的窗口中核对裁剪与两段覆盖",
+      "failure": "负坐标被错误截断或转换"
+    },
+    {
+      "id": "large_endpoints",
+      "points": 11,
+      "category": "correctness",
+      "evidence": "大坐标域和重复区间仍给出精确覆盖",
+      "method": "执行 1000 个重复区间，坐标跨度 10 的 12 次方，核对精确整数输出",
+      "failure": "坐标范围、重复区间或逐整数枚举使输出无效"
+    }
+  ],
+  "caps": [
+    {
+      "requires": [
+        "single_span"
+      ],
+      "max_score": 25
+    },
+    {
+      "requires": [
+        "window_clipping",
+        "overlap_union"
+      ],
+      "max_score": 49
+    },
+    {
+      "requires": [
+        "nested_union"
+      ],
+      "max_score": 75
+    }
+  ],
+  "wrong_max_score": 75
+}

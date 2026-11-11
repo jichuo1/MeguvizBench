@@ -1,0 +1,98 @@
+name: 发布排行榜
+
+on:
+  workflow_dispatch:
+    inputs:
+      benchmark_run_id:
+        description: 已审核的基准评测 Actions 运行编号。留空时读取仓库中的公开历史报告。
+        type: string
+        required: false
+
+permissions: {}
+
+concurrency:
+  group: meguvizbench-pages
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    if: github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: 核对基准评测来源
+        if: inputs.benchmark_run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.benchmark_run_id }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if ! [[ "$RUN_ID" =~ ^[1-9][0-9]{0,19}$ ]]; then
+            echo '::error::请填写 Actions 的数字运行编号。'
+            exit 1
+          fi
+          if ! gh api --hostname github.com "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" 2>/dev/null \
+            | jq -e --arg repo "$GITHUB_REPOSITORY" --arg branch "$DEFAULT_BRANCH" \
+              '.event == "workflow_dispatch" and .status == "completed" and .head_repository.full_name == $repo and .head_branch == $branch and (.path | split("@")[0]) == ".github/workflows/benchmark.yml"' \
+              >/dev/null 2>&1; then
+            echo '::error::运行来源须为当前仓库默认分支上已结束的手动基准评测。'
+            exit 1
+          fi
+      - name: 读取已导出的公开成绩
+        if: inputs.benchmark_run_id != ''
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: meguvizbench-public-results
+          path: ${{ runner.temp }}/reviewed-results
+          run-id: ${{ inputs.benchmark_run_id }}
+          github-token: ${{ github.token }}
+      - name: 校验成绩并构建站点
+        env:
+          RUN_ID: ${{ inputs.benchmark_run_id }}
+        run: |
+          input_args=()
+          if [[ -n "$RUN_ID" ]]; then
+            input_args+=(--input "$RUNNER_TEMP/reviewed-results/data.json")
+          elif [[ -f results/public/history.json ]]; then
+            input_args+=(--input results/public/history.json)
+          fi
+          if ! python -m meguvizbench site "${input_args[@]}" --output "$RUNNER_TEMP/pages-site" \
+            >"$RUNNER_TEMP/pages-build.log" 2>&1; then
+            echo '::error::站点或公开数据校验失败。'
+            exit 1
+          fi
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: ${{ runner.temp }}/pages-site
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - name: 部署 Pages
+        id: pages
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

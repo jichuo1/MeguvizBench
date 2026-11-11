@@ -1,0 +1,129 @@
+{
+  "task_id": "sensor-debounce",
+  "family_id": "sensor-debounce",
+  "variant_id": "base",
+  "version": "1.0.0",
+  "scorer_version": "1.0.0",
+  "dimension": "maintenance_architecture",
+  "subtype": "timing_bug",
+  "tags": [
+    "bugfix",
+    "timing",
+    "state"
+  ],
+  "difficulty": "D2",
+  "status": "synthetic",
+  "source": {
+    "project": "MeguvizBench synthetic calibration",
+    "revision": "1.0.0",
+    "exposure": "public_example_with_reference"
+  },
+  "capabilities": [
+    "shell"
+  ],
+  "submission": {
+    "files": [
+      "solution.py"
+    ],
+    "entrypoint": "solution.py"
+  },
+  "rubric": [
+    {
+      "id": "no_early_alert",
+      "points": 9,
+      "category": "correctness",
+      "evidence": "持续 4 秒时无告警",
+      "method": "活动后在阈值之前触发 tick",
+      "failure": "告警早于阈值"
+    },
+    {
+      "id": "exact_threshold",
+      "points": 14,
+      "category": "correctness",
+      "evidence": "达到 5 秒的 tick 立即告警",
+      "method": "检查精确阈值的一个 tick 与告警时间",
+      "failure": "阈值等值分支遗漏告警"
+    },
+    {
+      "id": "repeat_true",
+      "points": 18,
+      "category": "correctness",
+      "evidence": "重复的 true 保留首次激活时刻",
+      "method": "激活 3 秒后再报 true，在首个阈值时刻检查告警",
+      "failure": "重复采样把去抖时钟清零"
+    },
+    {
+      "id": "one_per_activation",
+      "points": 14,
+      "category": "correctness",
+      "evidence": "同一活动期只告警一次",
+      "method": "活动持续跨越多个合格 tick，比较完整告警序列",
+      "failure": "同一活动期重复告警"
+    },
+    {
+      "id": "cancel_pending",
+      "points": 9,
+      "category": "regression",
+      "evidence": "阈值前关闭会取消待告警事件",
+      "method": "激活后关闭，再运行超过原阈值的 tick",
+      "failure": "已关闭传感器仍告警"
+    },
+    {
+      "id": "restart_after_clear",
+      "points": 11,
+      "category": "correctness",
+      "evidence": "关闭后重新激活可告警且独立计时",
+      "method": "核对先后两个活动期及第二次阈值之前的 tick",
+      "failure": "第二次活动继承旧的计时或告警标志"
+    },
+    {
+      "id": "independent_sensors",
+      "points": 9,
+      "category": "regression",
+      "evidence": "传感器之间的时钟和取消状态彼此独立",
+      "method": "交错两个传感器的开启、关闭和 tick",
+      "failure": "更新一个传感器改变另一个传感器的时序"
+    },
+    {
+      "id": "stable_order",
+      "points": 6,
+      "category": "regression",
+      "evidence": "同一个 tick 的多个告警按名称顺序输出",
+      "method": "按逆序激活两个同一时刻达到阈值的传感器",
+      "failure": "告警顺序随插入顺序变化"
+    },
+    {
+      "id": "same_timestamp",
+      "points": 7,
+      "category": "correctness",
+      "evidence": "同一时刻严格按输入事件顺序生效",
+      "method": "同一时间戳分别在 tick 前后关闭两个传感器",
+      "failure": "实现按事件类型重排了同一时刻事件"
+    },
+    {
+      "id": "tick_only",
+      "points": 3,
+      "category": "regression",
+      "evidence": "无活动传感器时不产生告警",
+      "method": "执行空闲 tick 和未激活传感器的关闭更新",
+      "failure": "空闲事件产生告警或执行失败"
+    }
+  ],
+  "caps": [
+    {
+      "requires": [
+        "exact_threshold"
+      ],
+      "max_score": 35
+    },
+    {
+      "requires": [
+        "repeat_true",
+        "one_per_activation",
+        "restart_after_clear"
+      ],
+      "max_score": 69
+    }
+  ],
+  "wrong_max_score": 69
+}

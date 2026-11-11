@@ -1,0 +1,138 @@
+{
+  "task_id": "ring-cover-certificate",
+  "family_id": "ring-cover-certificate",
+  "variant_id": "base",
+  "version": "1.0.0",
+  "scorer_version": "1.0.0",
+  "dimension": "math_science",
+  "subtype": "certificate",
+  "tags": [
+    "certificate",
+    "ring",
+    "constraint"
+  ],
+  "difficulty": "D2",
+  "status": "synthetic",
+  "source": {
+    "project": "MeguvizBench synthetic calibration",
+    "revision": "1.0.0",
+    "exposure": "public_example_with_reference"
+  },
+  "capabilities": [],
+  "submission": {
+    "files": [
+      "certificate.json"
+    ],
+    "entrypoint": null
+  },
+  "rubric": [
+    {
+      "id": "certificate_shape",
+      "points": 8,
+      "category": "structure",
+      "evidence": "证书由 selected 数组和 witness 对象组成",
+      "method": "严格解析 UTF-8 JSON 并拒绝重复对象键，核对顶层字段类型",
+      "failure": "证书不可解析或交付结构不符"
+    },
+    {
+      "id": "position_domain",
+      "points": 8,
+      "category": "constraint",
+      "evidence": "每个选中开关均为范围内的整数编号",
+      "method": "逐个检查 0 至 13 的整数范围并排除布尔值",
+      "failure": "存在无效位置编号"
+    },
+    {
+      "id": "unique_switches",
+      "points": 6,
+      "category": "constraint",
+      "evidence": "每个选中开关只出现一次",
+      "method": "对数组长度与去重集合大小进行比较",
+      "failure": "证书重复声明同一个开关"
+    },
+    {
+      "id": "switch_budget",
+      "points": 8,
+      "category": "constraint",
+      "evidence": "选中的开关数不超过 5",
+      "method": "直接统计提交数组的元素数",
+      "failure": "使用的开关数超过预算"
+    },
+    {
+      "id": "mutual_exclusion",
+      "points": 12,
+      "category": "constraint",
+      "evidence": "环上没有相邻开关同时开启",
+      "method": "对每个开关核对模 14 的后继不在已选集合中",
+      "failure": "包含相邻互斥开关，含 13 与 0 的跨界情况"
+    },
+    {
+      "id": "forbidden_positions",
+      "points": 9,
+      "category": "constraint",
+      "evidence": "选中集合与禁选集合无交集",
+      "method": "使用固定禁用位置表与提交取交集",
+      "failure": "证书开启了禁用开关"
+    },
+    {
+      "id": "required_position",
+      "points": 8,
+      "category": "constraint",
+      "evidence": "必须打开的开关 11 被选中",
+      "method": "核对固定位置 11 存在",
+      "failure": "必选开关未启用"
+    },
+    {
+      "id": "target_coverage",
+      "points": 17,
+      "category": "correctness",
+      "evidence": "所有目标都在已选开关的真实覆盖范围内",
+      "method": "从提交的选中集合独立重算模 14 覆盖并验证目标包含关系",
+      "failure": "至少有一个目标未被合法覆盖"
+    },
+    {
+      "id": "witness_completeness",
+      "points": 8,
+      "category": "structure",
+      "evidence": "见证为每个目标提供一个且仅一个条目",
+      "method": "将见证对象键集合与固定目标字符串集合比对",
+      "failure": "遗漏目标、出现多余键或使用不规范编号"
+    },
+    {
+      "id": "witness_validity",
+      "points": 16,
+      "category": "correctness",
+      "evidence": "见证指向已选开关且逐项覆盖对应目标",
+      "method": "逐项验证见证值为已选的整数，并独立计算模 14 距离",
+      "failure": "某个见证引用未选开关或未覆盖目标"
+    }
+  ],
+  "caps": [
+    {
+      "requires": [
+        "certificate_shape",
+        "position_domain"
+      ],
+      "max_score": 20
+    },
+    {
+      "requires": [
+        "unique_switches",
+        "switch_budget",
+        "mutual_exclusion",
+        "forbidden_positions",
+        "required_position",
+        "target_coverage"
+      ],
+      "max_score": 49
+    },
+    {
+      "requires": [
+        "witness_completeness",
+        "witness_validity"
+      ],
+      "max_score": 59
+    }
+  ],
+  "wrong_max_score": 49
+}

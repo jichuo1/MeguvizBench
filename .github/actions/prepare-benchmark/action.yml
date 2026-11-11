@@ -1,0 +1,105 @@
+name: Prepare MeguvizBench plan
+description: Rebuild the frozen plan from the workflow revision and the selected task snapshot.
+
+inputs:
+  taskset:
+    description: Task set configuration ID.
+    required: true
+  models:
+    description: Model configuration preset ID.
+    required: true
+  budget:
+    description: Budget profile ID.
+    required: true
+  mode:
+    description: Benchmark mode.
+    required: true
+  repeats:
+    description: Number of independent repeats.
+    required: true
+  run-key:
+    description: Stable run identifier chosen by a maintainer.
+    required: true
+  materials-repo:
+    description: Private task repository slug for official evaluations.
+    required: false
+  materials-ref:
+    description: Reviewed immutable task repository commit for official evaluations.
+    required: false
+  materials-token:
+    description: Read-only token restricted to the private task repository.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: '3.13'
+
+    - name: Fetch approved private task snapshot
+      if: inputs.mode == 'official'
+      shell: bash
+      env:
+        MATERIALS_REPO: ${{ inputs.materials-repo }}
+        MATERIALS_REF: ${{ inputs.materials-ref }}
+        GH_TOKEN: ${{ inputs.materials-token }}
+      run: |
+        mkdir -p .bench
+        if ! [[ "$MATERIALS_REPO" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]{1,100}$ \
+              && "$MATERIALS_REF" =~ ^[0-9a-f]{40}$ && -n "$GH_TOKEN" ]] \
+            || [[ "${MATERIALS_REPO#*/}" == . || "${MATERIALS_REPO#*/}" == .. \
+              || -e .bench/materials || -L .bench/materials ]]; then
+          echo '::error::缺少私有题库仓库、固定提交或只读授权。'
+          exit 1
+        fi
+
+        if ! visibility=$(gh api --hostname github.com "repos/$MATERIALS_REPO" \
+          2>.bench/materials.log | jq -er --arg repo "$MATERIALS_REPO" \
+          '.private == true and .visibility == "private" and (.full_name | ascii_downcase) == ($repo | ascii_downcase)' \
+          2>>.bench/materials.log) || [[ "$visibility" != true ]]; then
+          echo '::error::无法验证题库仓库为私有。'
+          exit 1
+        fi
+
+        auth="Authorization: Basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)"
+        printf '::add-mask::%s\n' "$auth"
+        export MATERIALS_AUTH_HEADER="$auth"
+        unset GH_TOKEN auth
+        if ! (
+          git init -q .bench/materials &&
+          git -C .bench/materials -c http.followRedirects=false \
+            --config-env=http.https://github.com/.extraheader=MATERIALS_AUTH_HEADER \
+            fetch --quiet --no-tags --no-recurse-submodules --depth=1 "https://github.com/$MATERIALS_REPO.git" "$MATERIALS_REF" &&
+          test "$(git -C .bench/materials rev-parse FETCH_HEAD)" = "$MATERIALS_REF" &&
+          unset MATERIALS_AUTH_HEADER &&
+          git -C .bench/materials checkout --quiet --detach FETCH_HEAD &&
+          test -d .bench/materials/tasks &&
+          test ! -L .bench/materials/tasks
+        ) >>.bench/materials.log 2>&1; then
+          echo '::error::无法读取或验证固定的题库提交。'
+          exit 1
+        fi
+
+    - name: Build fixed plan
+      shell: bash
+      env:
+        TASKSET: ${{ inputs.taskset }}
+        MODELS: ${{ inputs.models }}
+        BUDGET: ${{ inputs.budget }}
+        MODE: ${{ inputs.mode }}
+        REPEATS: ${{ inputs.repeats }}
+        RUN_KEY: ${{ inputs.run-key }}
+      run: |
+        mkdir -p .bench
+        private_args=()
+        if [[ "$MODE" == official ]]; then
+          private_args+=(--private-tasks .bench/materials/tasks)
+        fi
+        if ! python -m meguvizbench plan --taskset "$TASKSET" --models "$MODELS" \
+          --budget "$BUDGET" --repeats "$REPEATS" --mode "$MODE" --run-key "$RUN_KEY" \
+          --backend docker --output .bench/plan.json "${private_args[@]}" >.bench/plan.log 2>&1; then
+          echo '::error::运行清单校验失败，请检查模式、预算和配置组合。'
+          exit 1
+        fi
