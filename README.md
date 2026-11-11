@@ -1,6 +1,8 @@
 # MeguvizBench
 
-面向软件工程、算法与验证任务的评测平台。当前有六个公开合成任务家族，包含参考解、错误对照、起始文件和 61 个独立评分项。公开校准结果与真实模型评测分开显示。
+面向软件工程、算法与验证任务的评测平台。基础与进阶题集共有九个公开任务家族和 100 个独立评分项。每个题包包含参考解、错误对照和起始文件。公开校准与真实模型评测分开显示。
+
+[公开评测报告](https://jichuo1.github.io/MeguvizBench/)
 
 ## 本地运行
 
@@ -25,6 +27,8 @@ python -m meguvizbench self-check --backend docker --output .bench/docker-check
 ```
 
 报告的 `checks.json` 是自检摘要，`evidence/` 保留每次试验的原始分、条目证据和封顶记录，`site/` 只含静态页面和脱敏数据。
+
+原六题保留在 `public-six`。[进阶公开校准题](tasks/challenges/README.md)使用 `public-challenges`，覆盖跨页分配、交付恢复与帧协调。用同一条自检命令加上 `--taskset public-challenges` 并换一个输出目录即可运行。两个题集独立汇总。
 
 ## 手动评测
 

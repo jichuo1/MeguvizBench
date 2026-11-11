@@ -31,11 +31,15 @@ jobs:
         with:
           python-version: '3.13'
       - name: 校验协议与公开题包
-        run: python -m meguvizbench validate
+        run: |
+          python -m meguvizbench validate
+          python -m meguvizbench validate --taskset public-challenges
       - name: 运行离线协议测试
         run: python -m unittest discover -s tests -v
       - name: Docker 校准与隔离探针
         run: python -m meguvizbench self-check --backend docker --output .bench/public-check
+      - name: Docker 进阶任务校准
+        run: python -m meguvizbench self-check --taskset public-challenges --backend docker --output .bench/challenge-check
 
   harbor-smoke:
     if: github.event_name == 'workflow_dispatch' && inputs.harbor_smoke

@@ -86,6 +86,8 @@ class PlatformTests(unittest.TestCase):
             create_plan("public-six", "pilot-two", "zero", 2, "pilot", "zero", "docker", self.tasks)
         with self.assertRaises(BenchError):
             create_plan("public-six", "pilot-two", "pilot", 2, "pilot", "local", "local", self.tasks)
+        with self.assertRaises(BenchError):
+            create_plan("public-challenges", "pilot-two", "pilot", 2, "pilot", "advanced", "docker", self.tasks)
         self.assertEqual([128, 128, 128, 48], list(map(len, batches({"expected_trials": list(range(432))}))))
 
     def test_transport_records_usage_and_limits_unknown_failures(self):

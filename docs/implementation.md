@@ -24,3 +24,9 @@
 | 试跑 | 两配置各重复两次的 24 个试次只生成计划，见 `.bench/dry-plan-final-20261111.json`。真实模型调用和支付为零。 |
 
 后续在已授权公开仓库依次运行「公开校验」、可选 Harbor smoke 和零预算手动矩阵，记录实际 run URL 和产物。受保护环境配置后，再验证专用私有仓库的权限、恢复和模型 API。Pages 部署后另核对线上地址。导入真实任务前须确定任务快照、参考解授权、脱敏和 API 数据处理边界。
+
+## 首次托管运行
+
+2026-11-11，公开仓库在 `main` 上完成 Docker 校验与 Harbor 0.25.0 smoke。Harbor 的公开 SVG oracle 通过独立验收并回传提交产物，reward 为 1。公开六题在零预算矩阵完成 12 个对照试次，脱敏报告已发布到 Pages。 [公开仓库](https://github.com/jichuo1/MeguvizBench) · [Docker 与 Harbor](https://github.com/jichuo1/MeguvizBench/actions/runs/43009594941) · [六题矩阵](https://github.com/jichuo1/MeguvizBench/actions/runs/43009600036) · [首次 Pages 部署](https://github.com/jichuo1/MeguvizBench/actions/runs/43009968336)
+
+`results/public/history.json` 保存该轮校验过的公开六题成绩。后续公开校准可并入历史展示，并保留独立的题集与可比组。当前运行均为公开对照，模型调用预算为零，私有材料未接入。

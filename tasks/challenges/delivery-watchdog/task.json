@@ -1,0 +1,176 @@
+{
+  "task_id": "delivery-watchdog",
+  "family_id": "delivery-watchdog",
+  "variant_id": "base",
+  "version": "1.0.0",
+  "scorer_version": "1.0.0",
+  "dimension": "backend_consistency",
+  "subtype": "idempotency",
+  "tags": [
+    "state_machine",
+    "watchdog",
+    "retry",
+    "deduplication",
+    "virtual_clock"
+  ],
+  "difficulty": "D4",
+  "status": "synthetic",
+  "source": {
+    "project": "MeguvizBench synthetic calibration",
+    "revision": "1.0.0",
+    "exposure": "public_analogue_with_reference"
+  },
+  "capabilities": [
+    "shell"
+  ],
+  "submission": {
+    "files": [
+      "solution.py",
+      "watchdog.py",
+      "progress.py"
+    ],
+    "entrypoint": "solution.py"
+  },
+  "rubric": [
+    {
+      "id": "entry_and_init",
+      "points": 5,
+      "category": "structure",
+      "evidence": "空序列无动作，缺失探测只启动第一代",
+      "method": "执行空批次及普通启动，比对完整 JSON 轨迹和整型编号",
+      "failure": "输出形状错误或初始调度错误"
+    },
+    {
+      "id": "probe_dedup",
+      "points": 7,
+      "category": "correctness",
+      "evidence": "已确认相同内容时，零次传送且结果不可改写",
+      "method": "模拟已交付对象，再发送缺失探测和取消",
+      "failure": "已交付内容被重复发送或成功状态被改写"
+    },
+    {
+      "id": "probe_outage",
+      "points": 8,
+      "category": "correctness",
+      "evidence": "初次及重试探测不确定时均不启动",
+      "method": "依次注入初次查询失败、工作退出后查询失败、相同内容读回",
+      "failure": "把查询不确定当成远端缺失"
+    },
+    {
+      "id": "progress_hwm",
+      "points": 10,
+      "category": "correctness",
+      "evidence": "高水位只被严格有效的前进更新",
+      "method": "组合相同计数、计数回退、阶段回退、心跳及跨阶段小计数前进",
+      "failure": "停滞期限被伪进度刷新或有效前进被忽略"
+    },
+    {
+      "id": "invalid_progress",
+      "points": 5,
+      "category": "regression",
+      "evidence": "非法计数不更新计时",
+      "method": "注入布尔、超范围、负数、小数与字符串，再验证停机时刻",
+      "failure": "无效计数续期或导致崩溃"
+    },
+    {
+      "id": "deadline_order",
+      "points": 8,
+      "category": "correctness",
+      "evidence": "恰好到期的事件先处理，已过期的事件不能续期",
+      "method": "分别注入压线前进、晚到前进、压线退出并检查发出动作的事件索引",
+      "failure": "期限边界处理提前或延后"
+    },
+    {
+      "id": "readback_gating",
+      "points": 9,
+      "category": "correctness",
+      "evidence": "交付必须有匹配读回，字节满额不结案",
+      "method": "检查满额无回执、冲突摘要回执、匹配摘要回执三个序列",
+      "failure": "虚报交付、接受冲突内容或拒绝合法读回"
+    },
+    {
+      "id": "reap_barrier",
+      "points": 11,
+      "category": "correctness",
+      "evidence": "确认退出前不启动下一代，只停止一次",
+      "method": "停滞后注入探测、确认、心跳，再给出退出及退避后的探测",
+      "failure": "未确认退出就重试，重复停止或排空中接受回执"
+    },
+    {
+      "id": "backoff",
+      "points": 6,
+      "category": "correctness",
+      "evidence": "以退出时刻为退避起点，压线可探测",
+      "method": "正常退出后尝试过早探测，再按截止时刻和零退避执行",
+      "failure": "退避时刻错误或退避中受提前探测影响"
+    },
+    {
+      "id": "stale_generation",
+      "points": 8,
+      "category": "correctness",
+      "evidence": "旧代回调无效，新尝试进度独立",
+      "method": "向第二代注入第一代进度、退出、确认，再用新代低阶段前进验证重置",
+      "failure": "旧代回调改变当前状态或进度跨代继承"
+    },
+    {
+      "id": "digest_identity",
+      "points": 7,
+      "category": "constraint",
+      "evidence": "恢复必须核对本地固定内容，远端异物判冲突",
+      "method": "模拟本地变更但远端表面相同，以及首次远端内容不同",
+      "failure": "变更输入被接受或不同内容被覆盖"
+    },
+    {
+      "id": "bounded_attempts",
+      "points": 9,
+      "category": "constraint",
+      "evidence": "尝试耗尽仍可读回确认，确认缺失时停止",
+      "method": "对比耗尽后的缺失与匹配回执，核对启动数量",
+      "failure": "重试超预算或把已确认交付误判失败"
+    },
+    {
+      "id": "cancellation",
+      "points": 7,
+      "category": "regression",
+      "evidence": "取消生效后无新动作，排空中不重复停止",
+      "method": "分别在到期瞬间和排空后取消，再注入后续事件",
+      "failure": "取消后仍重试或重复发出停止动作"
+    }
+  ],
+  "caps": [
+    {
+      "requires": [
+        "entry_and_init"
+      ],
+      "max_score": 20
+    },
+    {
+      "requires": [
+        "probe_dedup",
+        "readback_gating",
+        "reap_barrier",
+        "digest_identity"
+      ],
+      "max_score": 49
+    },
+    {
+      "requires": [
+        "probe_outage",
+        "stale_generation",
+        "bounded_attempts",
+        "cancellation"
+      ],
+      "max_score": 65
+    },
+    {
+      "requires": [
+        "progress_hwm",
+        "invalid_progress",
+        "deadline_order",
+        "backoff"
+      ],
+      "max_score": 80
+    }
+  ],
+  "wrong_max_score": 65
+}

@@ -17,7 +17,7 @@
 ## 首次启用
 
 1. 选定已授权的公开 GitHub 仓库与默认分支，将源码和工作流提交到该分支。核对 `Settings → Actions` 允许使用固定的官方 Actions。默认分支应受保护，并要求评审工作流、任务加载、验收及归档改动。
-2. 先检查 `公开校验`。它在 push 和 PR 上验证协议、运行离线测试及 Docker 公开对照，模型预算为零。公开对照经 `基准评测` 手动矩阵运行时可选择 `platform_validation`、`public-six`、`controls`、`zero`，再填写运行键和重复次数。公开对照环境 `benchmark-public` 留空。
+2. 先检查 `公开校验`。它在 push 和 PR 上验证协议、运行离线测试及两个公开题集的 Docker 对照，模型预算为零。通过 `基准评测` 手动运行公开对照时，选择 `platform_validation`、`public-six` 或 `public-challenges`、`controls` 和 `zero`，再填写运行键和重复次数。公开对照环境 `benchmark-public` 留空。
 3. 进入 `Settings → Pages`，将来源设置为 `GitHub Actions`。保护 `github-pages` 环境，只允许默认分支部署。运行 `发布排行榜` 后，在对应 job 环境链接打开页面并核对 `data.json`、分组、覆盖率和缺测标记。
 
 `公开校验` 的手动入口提供 `harbor_smoke` 选项。启用后在独立的临时虚拟环境安装 Harbor 候选版本 `0.25.0`，通过 Harbor CLI 运行公开 SVG 的 oracle 与独立验收，检查产物回传和评分记录。该 job 依赖 PyPI 与 Docker 可用。候选版本尚待托管 smoke 验证，常规 CI 和预算受控评测当前走直接 Docker 路径。 [Harbor 0.25.0](https://pypi.org/project/harbor/0.25.0/) · [独立验收环境](https://docs.harborframework.com/tasks/separate-verifier)

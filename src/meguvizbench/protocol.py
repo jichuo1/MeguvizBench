@@ -28,6 +28,7 @@ MAX_FILE = 64 * 1024
 MAX_SUBMISSION = 128 * 1024
 MAX_PROMPT = 48 * 1024
 BATCH_SIZE = 128
+PUBLIC_TASKSETS = {"public-six": "examples", "public-challenges": "challenges"}
 
 
 class BenchError(ValueError):
@@ -223,8 +224,9 @@ def presets():
 
 
 def taskset_tasks(taskset, private_tasks=None):
-    if taskset == "public-six":
-        return load_tasks(ROOT / "tasks" / "examples", "synthetic")
+    if taskset in PUBLIC_TASKSETS:
+        require(private_tasks is None, "private_root_for_public_taskset")
+        return load_tasks(ROOT / "tasks" / PUBLIC_TASKSETS[taskset], "synthetic")
     require(taskset == "private" and private_tasks is not None, "private_taskset_unavailable")
     return load_tasks(private_tasks, "active")
 
@@ -243,7 +245,7 @@ def create_plan(taskset, models, budget, repeats, mode, run_key, backend, tasks)
     require(models in config["models"] and budget in config["budgets"], "unknown_preset")
     profile = config["budgets"][budget]
     if mode == "platform_validation":
-        require(taskset == "public-six" and models == "controls" and budget == "zero", "invalid_control_plan")
+        require(taskset in PUBLIC_TASKSETS and models == "controls" and budget == "zero", "invalid_control_plan")
     else:
         require(models != "controls" and profile["total_microusd"] > 0 and backend == "docker", "paid_plan_requires_positive_budget_and_docker")
         require((mode, taskset) in {("pilot", "public-six"), ("official", "private")}, "invalid_paid_taskset")

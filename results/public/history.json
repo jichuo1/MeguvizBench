@@ -1,0 +1,459 @@
+{
+  "schema_version": "1.0",
+  "rows": [
+    {
+      "run_id": "run-baa70eefddcdf65c7db1523e",
+      "mode": "platform_validation",
+      "config_id": "oracle",
+      "config_digest": "748133156bdf066182b967f883848e811618c2595de6a929bd95b1d71a80a63d",
+      "model_id": "oracle",
+      "agent_id": "fixture-v1",
+      "protocol_version": "1.0",
+      "taskset_id": "public-six",
+      "taskset_version": "6865fe002a20c8c55c97d1921b2b7936fd2c055578f977b5128335d24825d6f1",
+      "budget_id": "zero",
+      "tools_profile": "no-network-json-stdin-v1",
+      "cohort": "47f7937f1f45975c65d15ef35c9ae4bae364afed9739bb767421ad55be3833a8",
+      "state": "complete",
+      "planned_trials": 6,
+      "scored_trials": 6,
+      "attempts": 6,
+      "success_rate": 1.0,
+      "failure_types": {
+        "api_error": 0,
+        "budget_exhausted": 0,
+        "cancelled": 0,
+        "environment_error": 0,
+        "missing": 0,
+        "model_error": 0,
+        "passed": 6,
+        "review_pending": 0,
+        "timeout": 0,
+        "unsupported_configuration": 0,
+        "verifier_error": 0
+      },
+      "attempt_statuses": {
+        "passed": 6
+      },
+      "cost_usd": 0.0,
+      "unknown_cost_attempts": 0,
+      "duration_seconds": 31.912,
+      "unknown_duration_attempts": 0,
+      "dimensions": {
+        "frontend_graphics": {
+          "score": 100.0,
+          "scored_trials": 2,
+          "planned_trials": 2,
+          "scored_families": 2,
+          "planned_families": 2,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "systems_performance": {
+          "score": null,
+          "scored_trials": 0,
+          "planned_trials": 0,
+          "scored_families": 0,
+          "planned_families": 0,
+          "coverage": null,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "algorithms_data": {
+          "score": null,
+          "scored_trials": 0,
+          "planned_trials": 0,
+          "scored_families": 0,
+          "planned_families": 0,
+          "coverage": null,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "backend_consistency": {
+          "score": 100.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "maintenance_architecture": {
+          "score": 100.0,
+          "scored_trials": 2,
+          "planned_trials": 2,
+          "scored_families": 2,
+          "planned_families": 2,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "math_science": {
+          "score": 100.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "research_evidence": {
+          "score": null,
+          "scored_trials": 0,
+          "planned_trials": 0,
+          "scored_families": 0,
+          "planned_families": 0,
+          "coverage": null,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "computer_use": {
+          "score": null,
+          "scored_trials": 0,
+          "planned_trials": 0,
+          "scored_families": 0,
+          "planned_families": 0,
+          "coverage": null,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        }
+      },
+      "task_types": {
+        "3d": {
+          "score": 100.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "certificate": {
+          "score": 100.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "idempotency": {
+          "score": 100.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "local_bug": {
+          "score": 100.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "svg": {
+          "score": 100.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "timing_bug": {
+          "score": 100.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        }
+      },
+      "composite_score": null,
+      "batch_state": "complete"
+    },
+    {
+      "run_id": "run-baa70eefddcdf65c7db1523e",
+      "mode": "platform_validation",
+      "config_id": "wrong",
+      "config_digest": "5fe13e8b10654b9b2794c706159a695021cb8135ddfa5c640399cb7ff34031e9",
+      "model_id": "wrong",
+      "agent_id": "fixture-v1",
+      "protocol_version": "1.0",
+      "taskset_id": "public-six",
+      "taskset_version": "6865fe002a20c8c55c97d1921b2b7936fd2c055578f977b5128335d24825d6f1",
+      "budget_id": "zero",
+      "tools_profile": "no-network-json-stdin-v1",
+      "cohort": "47f7937f1f45975c65d15ef35c9ae4bae364afed9739bb767421ad55be3833a8",
+      "state": "complete",
+      "planned_trials": 6,
+      "scored_trials": 6,
+      "attempts": 6,
+      "success_rate": 0.0,
+      "failure_types": {
+        "api_error": 0,
+        "budget_exhausted": 0,
+        "cancelled": 0,
+        "environment_error": 0,
+        "missing": 0,
+        "model_error": 6,
+        "passed": 0,
+        "review_pending": 0,
+        "timeout": 0,
+        "unsupported_configuration": 0,
+        "verifier_error": 0
+      },
+      "attempt_statuses": {
+        "model_error": 6
+      },
+      "cost_usd": 0.0,
+      "unknown_cost_attempts": 0,
+      "duration_seconds": 30.755,
+      "unknown_duration_attempts": 0,
+      "dimensions": {
+        "frontend_graphics": {
+          "score": 55.0,
+          "scored_trials": 2,
+          "planned_trials": 2,
+          "scored_families": 2,
+          "planned_families": 2,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "systems_performance": {
+          "score": null,
+          "scored_trials": 0,
+          "planned_trials": 0,
+          "scored_families": 0,
+          "planned_families": 0,
+          "coverage": null,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "algorithms_data": {
+          "score": null,
+          "scored_trials": 0,
+          "planned_trials": 0,
+          "scored_families": 0,
+          "planned_families": 0,
+          "coverage": null,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "backend_consistency": {
+          "score": 70.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "maintenance_architecture": {
+          "score": 72.0,
+          "scored_trials": 2,
+          "planned_trials": 2,
+          "scored_families": 2,
+          "planned_families": 2,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "math_science": {
+          "score": 49.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "research_evidence": {
+          "score": null,
+          "scored_trials": 0,
+          "planned_trials": 0,
+          "scored_families": 0,
+          "planned_families": 0,
+          "coverage": null,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "computer_use": {
+          "score": null,
+          "scored_trials": 0,
+          "planned_trials": 0,
+          "scored_families": 0,
+          "planned_families": 0,
+          "coverage": null,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        }
+      },
+      "task_types": {
+        "3d": {
+          "score": 55.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "certificate": {
+          "score": 49.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "idempotency": {
+          "score": 70.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "local_bug": {
+          "score": 75.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "svg": {
+          "score": 55.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        },
+        "timing_bug": {
+          "score": 69.0,
+          "scored_trials": 1,
+          "planned_trials": 1,
+          "scored_families": 1,
+          "planned_families": 1,
+          "coverage": 1.0,
+          "uncertainty": {
+            "status": "insufficient",
+            "lower": null,
+            "upper": null
+          }
+        }
+      },
+      "composite_score": null,
+      "batch_state": "complete"
+    }
+  ]
+}

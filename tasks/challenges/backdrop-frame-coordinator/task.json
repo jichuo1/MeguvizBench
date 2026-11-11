@@ -1,0 +1,172 @@
+{
+  "task_id": "backdrop-frame-coordinator",
+  "family_id": "backdrop-frame-coordinator",
+  "variant_id": "base",
+  "version": "1.0.0",
+  "scorer_version": "1.0.0",
+  "dimension": "frontend_graphics",
+  "subtype": "android",
+  "tags": [
+    "rendering",
+    "lifecycle",
+    "frame-budget",
+    "backend-selection"
+  ],
+  "difficulty": "D4",
+  "status": "synthetic",
+  "source": {
+    "project": "MeguvizBench independently authored graphics calibration",
+    "revision": "1.0.0",
+    "exposure": "public_cleanroom_analogue"
+  },
+  "capabilities": [
+    "shell"
+  ],
+  "submission": {
+    "files": [
+      "solution.py"
+    ],
+    "entrypoint": "solution.py"
+  },
+  "rubric": [
+    {
+      "id": "empty_protocol",
+      "points": 4,
+      "category": "regression",
+      "evidence": "无有效绑定时仍逐帧输出空结构",
+      "method": "提交过期解绑和回执后检查两帧输出",
+      "failure": "空帧丢失、格式错误或有幽灵绑定"
+    },
+    {
+      "id": "confirmed_cutover",
+      "points": 8,
+      "category": "correctness",
+      "evidence": "首次探测保留兼容采样，确认后停止不必要的采样",
+      "method": "依次检查探测、确认、软件帧回退、硬件帧恢复",
+      "failure": "原生切换或回退期间输出路径不符"
+    },
+    {
+      "id": "runtime_gates",
+      "points": 6,
+      "category": "correctness",
+      "evidence": "硬件与原生能力必须同时有效",
+      "method": "分别关掉两项能力，再恢复",
+      "failure": "在不支持条件下提交原生探测"
+    },
+    {
+      "id": "clip_halo",
+      "points": 7,
+      "category": "constraint",
+      "evidence": "包含 halo 的范围四边均在 viewport 内",
+      "method": "检查四边分别越界及四边恰好接触",
+      "failure": "过度裁剪或越界仍被判原生"
+    },
+    {
+      "id": "semantic_gates",
+      "points": 6,
+      "category": "constraint",
+      "evidence": "兼容标志、材质、来源和资源标志共同约束资格",
+      "method": "同一帧核对其他材质、不同来源、禁用和静态层",
+      "failure": "错误来源或材质走原生路径"
+    },
+    {
+      "id": "in_flight",
+      "points": 10,
+      "category": "correctness",
+      "evidence": "探测未确认期间无重复提交或过早接管",
+      "method": "交错多个硬件帧与软件帧后才确认首次探测",
+      "failure": "在途探测被重置、重复或提前确认"
+    },
+    {
+      "id": "sticky_failure",
+      "points": 8,
+      "category": "correctness",
+      "evidence": "失败绑定保持兼容回退，重复回执不能复活",
+      "method": "首次回执失败，经过能力变化和重复成功回执",
+      "failure": "失败后再次探测或接管"
+    },
+    {
+      "id": "generation_isolation",
+      "points": 9,
+      "category": "regression",
+      "evidence": "重绑的回执和解绑只作用于匹配代次",
+      "method": "同名替换并交错新旧回执，最终正常解绑",
+      "failure": "陈旧事件改变新绑定或资源未释放"
+    },
+    {
+      "id": "late_receipts",
+      "points": 7,
+      "category": "correctness",
+      "evidence": "只有真实在途帧能确认，重复回执失效",
+      "method": "探测前回执、错帧失败及消费后的重复回执",
+      "failure": "从未发出的帧或重复回执改变状态"
+    },
+    {
+      "id": "latest_native_failure",
+      "points": 7,
+      "category": "correctness",
+      "evidence": "已确认路径只接受最近一次原生绘制的结果",
+      "method": "交错已确认帧、旧失败和新失败",
+      "failure": "旧帧错误覆盖当前状态或最新失败未回退"
+    },
+    {
+      "id": "shared_capture",
+      "points": 9,
+      "category": "correctness",
+      "evidence": "相同来源版本的多消费者合并采样，按最大开销扣费",
+      "method": "同源不同开销与其他来源恰好占满预算",
+      "failure": "重复扣费或低估共享采样开销"
+    },
+    {
+      "id": "budget_priority",
+      "points": 8,
+      "category": "constraint",
+      "evidence": "采样遵守预算且按最高优先级跳过超额组",
+      "method": "使用冲突的优先级、开销和连续两帧不同预算",
+      "failure": "预算超支、组优先级错误或提前停止分配"
+    },
+    {
+      "id": "scope_revision_order",
+      "points": 6,
+      "category": "regression",
+      "evidence": "绘制目标、来源版本互相独立，输出顺序固定",
+      "method": "交错两个目标、同源不同版本与相同优先级",
+      "failure": "跨目标泄漏、旧版本复用或顺序不稳定"
+    },
+    {
+      "id": "mixed_paths",
+      "points": 5,
+      "category": "correctness",
+      "evidence": "原生接管后同源兼容消费者仍可采样",
+      "method": "检查预算紧张下由探测到混合路径的两帧",
+      "failure": "原生接管吞掉兼容层采样或仍多扣费"
+    }
+  ],
+  "caps": [
+    {
+      "requires": [
+        "confirmed_cutover"
+      ],
+      "max_score": 32
+    },
+    {
+      "requires": [
+        "in_flight",
+        "sticky_failure",
+        "generation_isolation",
+        "late_receipts",
+        "latest_native_failure"
+      ],
+      "max_score": 59
+    },
+    {
+      "requires": [
+        "shared_capture",
+        "budget_priority",
+        "scope_revision_order"
+      ],
+      "max_score": 69
+    }
+  ],
+  "wrong_max_score": 59
+}

@@ -11,7 +11,7 @@ import uuid
 from .archive import PrivateArchive, assert_claim, plan_path, trial_path
 from .execution import ensure_workspace, grade_submission, restore_interrupted, result_path, run_trial, validate_bundle
 from .grading import docker_prepare
-from .protocol import BenchError, ROOT, batches, create_plan, encoded, identifier, load_tasks, read_json, require, taskset_tasks, verify_plan, write_json
+from .protocol import BenchError, PUBLIC_TASKSETS, ROOT, batches, create_plan, encoded, identifier, load_tasks, read_json, require, taskset_tasks, verify_plan, write_json
 from .reporting import build_public_report, publish_site, validate_public_report
 from .transport import OpenAITransport
 
@@ -86,9 +86,12 @@ def collect_results(plan, tasks, directory):
 
 def self_check(args):
     ensure_workspace()
-    plan = create_plan("public-six", "controls", "zero", 1, "platform_validation", args.run_key, args.backend,
-                       tasks := taskset_tasks("public-six"))
-    require(len(tasks) == 6 and len({task.spec["family_id"] for task in tasks.values()}) == 6, "public_six_families_required")
+    tasks = taskset_tasks(args.taskset)
+    run_key = args.run_key or f"{args.taskset}-self-check"
+    plan = create_plan(args.taskset, "controls", "zero", 1, "platform_validation", run_key, args.backend, tasks)
+    families = len({task.spec["family_id"] for task in tasks.values()})
+    if args.taskset == "public-six":
+        require(len(tasks) == families == 6, "public_six_families_required")
     if args.backend == "docker":
         check_docker_boundary(plan["environment"])
     write_json(args.output / "plan.json", plan)
@@ -103,18 +106,20 @@ def self_check(args):
             require(record["status"] == "model_error" and record["score"] is not None
                     and record["score"] <= task.spec["wrong_max_score"], "wrong_control_not_rejected")
         attempts.append(record)
-        control_scores.append({"task": trial["task_id"], "fixture": trial["model_id"], "score": record["score"]})
+        control_scores.append({"task": trial["task_id"], "fixture": trial["model_id"], "score": record["score"],
+                               "raw_score": record["grade"]["raw_score"]})
     for task in tasks.values():
-        if task.spec["dimension"] != "maintenance_architecture":
+        if args.taskset == "public-six" and task.spec["dimension"] != "maintenance_architecture":
             continue
         status, grade, _, _ = grade_submission(task, task.fixture("starter"), args.backend, plan["environment"], time.monotonic() + 180)
         require(status == "model_error" and grade is not None and grade["score"] < 100, "starter_bug_not_rejected")
-        control_scores.append({"task": task.spec["task_id"], "fixture": "starter", "score": grade["score"]})
+        control_scores.append({"task": task.spec["task_id"], "fixture": "starter", "score": grade["score"],
+                               "raw_score": grade["raw_score"]})
     require(collect_results(plan, tasks, args.output / "evidence") == attempts, "evidence_recalculation_failed")
     report = check_public_boundary(plan, attempts)
     write_json(args.output / "checks.json", {"backend": args.backend, "scores": control_scores, "docker_boundary": args.backend == "docker"})
     publish_site(report, ROOT / "web", args.output / "site")
-    print(f"platform_validation: {len(tasks)} families, {len(attempts)} control trials")
+    print(f"platform_validation: {families} families, {len(attempts)} control trials")
 
 
 def run(args):
@@ -124,7 +129,7 @@ def run(args):
         print(encoded(status).decode())
         return
     if args.command == "validate":
-        tasks = taskset_tasks("private" if args.private_tasks else "public-six", args.private_tasks)
+        tasks = taskset_tasks(args.taskset or ("private" if args.private_tasks else "public-six"), args.private_tasks)
         print(f"validated_tasks={len(tasks)}")
         return
     if args.command == "self-check":
@@ -235,13 +240,15 @@ def parser():
     commands = cli.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor")
     validate = commands.add_parser("validate")
+    validate.add_argument("--taskset", choices=[*PUBLIC_TASKSETS, "private"])
     validate.add_argument("--private-tasks", type=Path)
     check = commands.add_parser("self-check")
     check.add_argument("--output", type=Path, required=True)
     check.add_argument("--backend", choices=["local", "docker"], default="docker")
-    check.add_argument("--run-key", default="public-self-check")
+    check.add_argument("--taskset", choices=PUBLIC_TASKSETS, default="public-six")
+    check.add_argument("--run-key")
     plan = commands.add_parser("plan")
-    plan.add_argument("--taskset", choices=["public-six", "private"], required=True)
+    plan.add_argument("--taskset", choices=[*PUBLIC_TASKSETS, "private"], required=True)
     plan.add_argument("--models", required=True)
     plan.add_argument("--budget", required=True)
     plan.add_argument("--repeats", type=int, required=True)

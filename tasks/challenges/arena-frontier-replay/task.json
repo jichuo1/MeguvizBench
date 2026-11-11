@@ -1,0 +1,155 @@
+{
+  "task_id": "arena-frontier-replay",
+  "family_id": "arena-frontier-replay",
+  "variant_id": "base",
+  "version": "1.0.0",
+  "scorer_version": "1.0.0",
+  "dimension": "systems_performance",
+  "tags": [
+    "arena",
+    "first-fit",
+    "state-machine",
+    "work-certificate"
+  ],
+  "difficulty": "D4",
+  "status": "synthetic",
+  "source": {
+    "project": "Public synthetic calibration inspired by allocator regression patterns",
+    "revision": "1.0.0",
+    "exposure": "public_example_with_reference"
+  },
+  "capabilities": [
+    "shell"
+  ],
+  "submission": {
+    "files": [
+      "solution.py",
+      "arena.py"
+    ],
+    "entrypoint": "solution.py"
+  },
+  "rubric": [
+    {
+      "id": "address_alignment",
+      "points": 8,
+      "category": "correctness",
+      "evidence": "绝对地址的对齐与游标推进",
+      "method": "用非对齐基址、非零游标和精确容量边界逐步回放",
+      "failure": "按相对游标对齐或错误拒绝可用边界"
+    },
+    {
+      "id": "first_fit",
+      "points": 10,
+      "category": "correctness",
+      "evidence": "按发布顺序选择最早页面",
+      "method": "使用物理地址逆序且有多个可选页面的输入回放",
+      "failure": "选择错误页面或改变未选中页面游标"
+    },
+    {
+      "id": "weaker_size",
+      "points": 8,
+      "category": "regression",
+      "evidence": "尺寸下降且对齐变强时重访前缀",
+      "method": "预制早页仅能容纳第二个请求的短尾空间",
+      "failure": "沿用过大的扫描起点并错过首个匹配"
+    },
+    {
+      "id": "weaker_alignment",
+      "points": 8,
+      "category": "regression",
+      "evidence": "对齐放宽且尺寸增加时重访前缀",
+      "method": "预制只有放宽对齐后才可用的早页尾部",
+      "failure": "把尺寸增加误作单独足够的复用条件"
+    },
+    {
+      "id": "reuse_prefix",
+      "points": 9,
+      "category": "constraint",
+      "evidence": "跨形状双维支配后起点复用",
+      "method": "在多个不可用页面后交替使用相等及更强形状",
+      "failure": "未按协议复用前缀或错误跳过可用页面"
+    },
+    {
+      "id": "no_space_frontier",
+      "points": 8,
+      "category": "constraint",
+      "evidence": "完整失败记录可复用的当前页数",
+      "method": "重复无空间请求，随后以更弱形状回访",
+      "failure": "将失败错误记为无凭证、改变游标或继续错误跳页"
+    },
+    {
+      "id": "append_after_miss",
+      "points": 8,
+      "category": "constraint",
+      "evidence": "追加只扩展可扫描尾部",
+      "method": "在完整失败后追加两个页面并验证先前凭证仍可复用",
+      "failure": "追加清空仍有效的前缀或无法访问新页"
+    },
+    {
+      "id": "retire_with_pins",
+      "points": 10,
+      "category": "correctness",
+      "evidence": "释放后待排空及 ID 可重用边界",
+      "method": "两次借用、释放、归还、复用和状态检查",
+      "failure": "提前重用 ID、错误接收新借用或漏删已排空 ID"
+    },
+    {
+      "id": "reset_barrier",
+      "points": 8,
+      "category": "correctness",
+      "evidence": "活跃与待排空均阻挡复位",
+      "method": "交替检查失败复位、游标与最后借用归还",
+      "failure": "失败复位改写游标或在持有者未排空时成功"
+    },
+    {
+      "id": "reset_invalidation",
+      "points": 8,
+      "category": "regression",
+      "evidence": "成功复位清除已失效的前缀",
+      "method": "先建立正下界并释放所有者，复位后再次分配",
+      "failure": "复位后继续跳过重新可用的早页"
+    },
+    {
+      "id": "rejected_commands",
+      "points": 7,
+      "category": "regression",
+      "evidence": "拒绝路径保护凭证与原有状态",
+      "method": "组合重复 ID、非法形状、缺失 ID 和零借用归还",
+      "failure": "拒绝事件不正确或其后扫描起点被修改"
+    },
+    {
+      "id": "mixed_trace",
+      "points": 8,
+      "category": "correctness",
+      "evidence": "复杂生命周期与页面状态持续一致",
+      "method": "运行两个固定种子的混合长序列，逐事件比对",
+      "failure": "只有单一输入形状正确，长链状态逐步失真"
+    }
+  ],
+  "caps": [
+    {
+      "requires": [
+        "address_alignment",
+        "first_fit"
+      ],
+      "max_score": 45
+    },
+    {
+      "requires": [
+        "weaker_size",
+        "weaker_alignment"
+      ],
+      "max_score": 69
+    },
+    {
+      "requires": [
+        "retire_with_pins",
+        "reset_barrier",
+        "reset_invalidation"
+      ],
+      "max_score": 72
+    }
+  ],
+  "wrong_max_score": 69,
+  "subtype": "bugfix"
+}

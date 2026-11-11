@@ -12,7 +12,7 @@ on:
         description: 题集配置
         type: choice
         default: public-six
-        options: [public-six, private]
+        options: [public-six, public-challenges, private]
       models:
         description: 模型配置组
         type: choice
@@ -64,9 +64,9 @@ jobs:
           TASKSET: ${{ inputs.taskset }}
         run: |
           case "$MODE:$TASKSET" in
-            platform_validation:public-six|pilot:public-six|official:private) ;;
+            platform_validation:public-six|platform_validation:public-challenges|pilot:public-six|official:private) ;;
             *)
-              echo '::error::公开对照与试跑使用 public-six，正式评测使用 private。'
+              echo '::error::公开对照使用公开题集，试跑使用 public-six，正式评测使用 private。'
               exit 1
               ;;
           esac
